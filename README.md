@@ -1,6 +1,6 @@
 # TaskZero
 A fully working sample C# .Net Core Console App using Event Sourcing, CQRS patterns and Event Store for the storage of events. The app manage TO-DO lists keeping the history of the events and showing how to separate write and read models.  
-The synchroniser keep up to date the current state in a cache object used as read model. It subscribe events using the by_category projection.  
+The synchroniser keep up to date the current state in a cache object used as read model. It subscribe events using the by_category projection. No external dependencies in the core domain.
   
 # Run  
 You can build and run the app with the following command:  
