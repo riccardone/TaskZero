@@ -78,7 +78,7 @@ namespace TaskZero.ReadModels.InMemory
 
             if (arg2.Event.EventType.Equals("TaskAdded"))
                 HandleTaskAdded(data, metaData);
-            if (arg2.Event.EventType.Equals("TaskDeleted"))
+            if (arg2.Event.EventType.Equals("TaskRemoved"))
                 HandleTaskDeleted(data, metaData);
             return Task.CompletedTask;
         }

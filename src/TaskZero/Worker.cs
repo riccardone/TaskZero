@@ -22,12 +22,11 @@ namespace TaskZero
             _sourceName = sourceName;
             _synchroniserService = synchroniserService;
             _handler = handler;
+            InitReadModel();
         }
 
         public void Run()
         {
-            _synchroniserService.LiveSynchStarted += SyncroniserService_LiveSynchStarted;
-            _synchroniserService.Start().Wait();
             Console.WriteLine("Write your name and press enter please...");
             _userName = Console.ReadLine();
             _correlationId = Deterministic.Create(Deterministic.Namespaces.Commands, Encoding.ASCII.GetBytes(_userName))
@@ -35,6 +34,12 @@ namespace TaskZero
             _handler.Handle(new CreateTaskPod(_correlationId, DateTime.Now,
                 new Dictionary<string, string> {{"source", _sourceName}, {"username", _userName } }));
             RunToDoView(_handler);
+        }
+
+        private void InitReadModel()
+        {
+            _synchroniserService.LiveSynchStarted += SyncroniserService_LiveSynchStarted;
+            _synchroniserService.Start();
         }
 
         private static void SyncroniserService_LiveSynchStarted(object sender, EventArgs e)
@@ -63,6 +68,7 @@ namespace TaskZero
                 Console.WriteLine($"You are managing {_userName}'s TODO list");
                 Console.WriteLine("Press A to add a new task");
                 Console.WriteLine("Press D to remove a task");
+                Console.WriteLine("Press C to change pod");
 
                 var key = Console.ReadKey();
                 switch (key.Key)
@@ -72,6 +78,9 @@ namespace TaskZero
                         break;
                     case ConsoleKey.D:
                         handler.Handle(BuildRemoveTask());
+                        break;
+                    case ConsoleKey.C:
+                        Run();
                         break;
                 }
             } while (true);
