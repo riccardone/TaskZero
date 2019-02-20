@@ -18,7 +18,10 @@ namespace TaskZero.Domain.Aggregates
             RegisterTransition<TaskPodCreated>(Apply);
             RegisterTransition<TaskAdded>(Apply);
             RegisterTransition<TaskRemoved>(Apply);
+            RegisterTransition<WrongRemoveTaskRequested>(Apply);
         }
+
+        private void Apply(WrongRemoveTaskRequested obj) { }
 
         public TaskPod(TaskPodCreated evt) : this()
         {
@@ -41,28 +44,27 @@ namespace TaskZero.Domain.Aggregates
             _userName = obj.Metadata["username"];
         }
 
-        public List<Event> AddTask(AddNewTask cmd)
+        public void AddTask(AddNewTask cmd)
         {
             CheckCommonPreconditions(cmd);
             Ensure.NotNullOrEmpty(cmd.Metadata["$correlationId"], "$correlationId");
             if (!cmd.Metadata["username"].Equals(_userName))
-                return new List<Event>();
-            var evt = new TaskAdded(cmd.TaskId, cmd.Title, cmd.Description, cmd.DueDate, cmd.Priority, cmd.Metadata);
-            RaiseEvent(evt);
-            return new List<Event> {evt};
+                return;
+            RaiseEvent(new TaskAdded(cmd.TaskId, cmd.Title, cmd.Description, cmd.DueDate, cmd.Priority, cmd.Metadata));
         }
 
-        public List<Event> RemoveTask(RemoveTask cmd)
+        public void RemoveTask(RemoveTask cmd)
         {
             CheckCommonPreconditions(cmd);
             Ensure.NotNullOrEmpty(cmd.Metadata["$correlationId"], "$correlationId");
             if (!cmd.Metadata["username"].Equals(_userName))
-                return new List<Event>();
-            var evt = new TaskRemoved(cmd.Id, cmd.Metadata);
+                return;
             if (!_tasks.ContainsKey(cmd.Id))
-                return new List<Event>();
-            RaiseEvent(evt);
-            return new List<Event> { evt };
+            {
+                RaiseEvent(new WrongRemoveTaskRequested(cmd.Id, cmd.Metadata));
+                return;
+            }
+            RaiseEvent(new TaskRemoved(cmd.Id, cmd.Metadata));
         }
 
         public static TaskPod Create(CreateTaskPod cmd)

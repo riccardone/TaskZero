@@ -1,6 +1,9 @@
-﻿using TaskZero.Domain;
+﻿using System;
+using System.Linq;
+using TaskZero.Domain;
 using TaskZero.Domain.Aggregates;
 using TaskZero.Domain.Messages.Commands;
+using TaskZero.Domain.Messages.Events;
 
 namespace TaskZero.Adapter
 {

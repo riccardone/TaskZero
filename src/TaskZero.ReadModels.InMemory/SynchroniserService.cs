@@ -80,7 +80,17 @@ namespace TaskZero.ReadModels.InMemory
                 HandleTaskAdded(data, metaData);
             if (arg2.Event.EventType.Equals("TaskRemoved"))
                 HandleTaskDeleted(data, metaData);
+            if (arg2.Event.EventType.Equals("WrongRemoveTaskRequested"))
+                HandleWrongRemoveTaskRequested(data, metaData);
             return Task.CompletedTask;
+        }
+
+        private void HandleWrongRemoveTaskRequested(dynamic data, dynamic metaData)
+        {
+            if (!Cache.ContainsKey(metaData.username.Value))
+                return;
+            IDictionary<string, string> todoPod = Cache[metaData.username.Value];
+            todoPod.Add(data.TaskToDeleteId.Value, $"TaskId '{data.TaskToDeleteId.Value}' not found in your task pod");
         }
 
         private void HandleTaskDeleted(dynamic data, dynamic metaData)
