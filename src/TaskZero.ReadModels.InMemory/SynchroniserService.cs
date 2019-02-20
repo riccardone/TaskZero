@@ -11,8 +11,8 @@ namespace TaskZero.ReadModels.InMemory
 {
     public class SynchroniserService
     {
-        // This could be called a Synchroniser or Output-Adapter. It is responsible to keep up-to-date the readmodel.
-        // For this example is a dictionary of dictionary but in a real world it could be an ElasticSearch index
+        // This is responsible to keep up-to-date the readmodel.
+        // In a real world scenario it could be an ElasticSearch indexer
         
         private readonly IEventStoreConnection _conn;
         public IDictionary<string, IDictionary<string, string>> Cache { get; private set; }
