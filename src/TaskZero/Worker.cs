@@ -69,6 +69,7 @@ namespace TaskZero
                 Console.WriteLine("Press A to add a new task");
                 Console.WriteLine("Press D to remove a task");
                 Console.WriteLine("Press C to change pod");
+                Console.WriteLine("Press R to delete pod");
 
                 var key = Console.ReadKey();
                 switch (key.Key)
@@ -77,26 +78,67 @@ namespace TaskZero
                         handler.Handle(BuildAddNewTaskCommand());
                         break;
                     case ConsoleKey.D:
-                        handler.Handle(BuildRemoveTask());
+                        var remove = BuildRemoveTask();
+                        if (remove != null)
+                            handler.Handle(remove);
                         break;
                     case ConsoleKey.C:
+                        Console.Clear();
                         Run();
+                        break;
+                    case ConsoleKey.R:
+                        var delete = BuildDeleteTaskPod();
+                        if (delete != null)
+                        {
+                            try
+                            {
+                                handler.Handle(delete);
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine($"TaskPod {_userName} has been already deleted");
+                            }
+                            Console.Clear();
+                            Run();
+                        }
                         break;
                 }
             } while (true);
         }
 
-        private RemoveTask BuildRemoveTask()
+        private DeleteTaskPod BuildDeleteTaskPod()
         {
-            Console.WriteLine("Task ID?");
-            var idToDelete = Console.ReadLine();
-            return new RemoveTask(Guid.Parse(idToDelete),
-                new Dictionary<string, string>
+            Console.WriteLine($"Are you sure that you want permanently delete {_userName}'s TODO and its content?");
+            Console.WriteLine($"You will not be able to reuse the same delete {_userName} name for another TaskPod (Y to confirm, N to cancel)");
+            var key = Console.ReadKey();
+            if (key.Key == ConsoleKey.Y)
+            {
+                return new DeleteTaskPod(_correlationId, new Dictionary<string, string>
                 {
                     {"$correlationId", _correlationId},
                     {"source", _sourceName},
                     {"username", _userName}
                 });
+            }
+            return null;
+        }
+
+        private RemoveTask BuildRemoveTask()
+        {
+            Console.WriteLine("Task ID?");
+            var idText = Console.ReadLine();
+            if (Guid.TryParse(idText, out var idToDelete))
+            {
+                return new RemoveTask(idToDelete, new Dictionary<string, string>
+                {
+                    {"$correlationId", _correlationId},
+                    {"source", _sourceName},
+                    {"username", _userName}
+                });
+            }
+            Console.WriteLine("Not valid id");
+            Thread.Sleep(1000);
+            return null;
         }
 
         private AddNewTask BuildAddNewTaskCommand()

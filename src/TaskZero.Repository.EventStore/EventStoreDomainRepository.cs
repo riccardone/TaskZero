@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
-using EventStore.ClientAPI.Exceptions;
 using Newtonsoft.Json;
 using TaskZero.Domain;
 using TaskZero.Domain.Messages.Events;
@@ -96,29 +96,7 @@ namespace TaskZero.Repository.EventStore
             return data;
         }
 
-        public override IEnumerable<Event> Save<TAggregate>(TAggregate aggregate)
-        {
-            // Synchronous save operation
-            var streamName = AggregateToStreamName(aggregate.GetType(), aggregate.AggregateId);
-            var events = aggregate.UncommitedEvents().ToList();
-            var originalVersion = CalculateExpectedVersion(aggregate, events);
-            var expectedVersion = originalVersion == 0 ? ExpectedVersion.NoStream : originalVersion - 1;
-            var eventData = events.Select(CreateEventData).ToArray();
-            try
-            {
-                if (events.Count > 0)
-                    _connection.AppendToStreamAsync(streamName, expectedVersion, eventData).Wait();
-            }
-            catch (AggregateException)
-            {
-                // Try to save using ExpectedVersion.Any to swallow silently WrongExpectedVersion error
-                _connection.AppendToStreamAsync(streamName, ExpectedVersion.Any, eventData).Wait();
-            }
-            aggregate.ClearUncommitedEvents();
-            return events;
-        }
-
-        public override async Task<IEnumerable<Event>> SaveAsync<TAggregate>(TAggregate aggregate)
+        public override async Task<IEnumerable<Event>> Save<TAggregate>(TAggregate aggregate)
         {
             var streamName = AggregateToStreamName(aggregate.GetType(), aggregate.AggregateId);
             var events = aggregate.UncommitedEvents().ToList();

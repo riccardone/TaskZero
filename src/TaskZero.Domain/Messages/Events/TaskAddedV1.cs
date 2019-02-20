@@ -4,7 +4,7 @@ using TaskZero.Domain.Messages.Commands;
 
 namespace TaskZero.Domain.Messages.Events
 {
-    public class TaskAdded : Event
+    public class TaskAddedV1 : Event
     {
         public Guid Id { get; }
         public string Title { get; }
@@ -13,7 +13,7 @@ namespace TaskZero.Domain.Messages.Events
         public Priority Priority { get; }
         public IDictionary<string, string> Metadata { get; }
 
-        public TaskAdded(Guid id, string title,
+        public TaskAddedV1(Guid id, string title,
             string description,
             DateTime? dueDate,
             Priority priority,

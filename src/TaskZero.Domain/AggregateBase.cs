@@ -36,10 +36,13 @@ namespace TaskZero.Domain
 
         public void ApplyEvent(Event @event)
         {
-            var eventType = @event.GetType();
-            if (_routes.ContainsKey(eventType))
+            if (@event != null)
             {
-                _routes[eventType](@event);
+                var eventType = @event.GetType();
+                if (_routes.ContainsKey(eventType))
+                {
+                    _routes[eventType](@event);
+                }
             }
             Version++;
         }

@@ -6,8 +6,7 @@ namespace TaskZero.Domain
 {
     public abstract class DomainRepositoryBase : IDomainRepository
     {
-        public abstract IEnumerable<Event> Save<TAggregate>(TAggregate aggregate) where TAggregate : IAggregate;
-        public abstract Task<IEnumerable<Event>> SaveAsync<TAggregate>(TAggregate aggregate) where TAggregate : IAggregate;
+        public abstract Task<IEnumerable<Event>> Save<TAggregate>(TAggregate aggregate) where TAggregate : IAggregate;
         public abstract TResult GetById<TResult>(string id) where TResult : IAggregate, new();
         public abstract TResult GetById<TResult>(string id, int eventsToLoad) where TResult : IAggregate, new();
         public abstract void DeleteAggregate<TAggregate>(string correlationId, bool hard);

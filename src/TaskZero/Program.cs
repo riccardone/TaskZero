@@ -1,5 +1,6 @@
 ﻿using System;
 using EventStore.ClientAPI;
+using EventStore.ClientAPI.SystemData;
 using TaskZero.Adapter;
 using TaskZero.ReadModels.InMemory;
 using TaskZero.Repository.EventStore;
@@ -18,7 +19,8 @@ namespace TaskZero
             _uri = new Uri($"tcp://{es}");
             try
             {
-                var synchroniserService = new SynchroniserService(BuildConnection("es-taskzero-syncroniser", _uri));
+                var synchroniserService = new SynchroniserService(BuildConnection("es-taskzero-syncroniser", _uri),
+                    new UserCredentials("admin", "changeit"));
                 var domainConnection = BuildConnection("es-taskzero-domain", _uri);
                 domainConnection.ConnectAsync().Wait();
                 var domainRepository = new EventStoreDomainRepository("domain", domainConnection);

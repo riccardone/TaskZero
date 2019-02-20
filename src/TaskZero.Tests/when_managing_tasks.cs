@@ -31,8 +31,8 @@ public class when_managing_tasks
         Assert.IsTrue(pod.UncommitedEvents().First().Metadata["$correlationId"].Equals(userId.ToString()));
         Assert.IsTrue(pod.UncommitedEvents().ToArray()[1].Metadata["$correlationId"].Equals(userId.ToString()));
         Assert.IsTrue(pod.UncommitedEvents().ToArray()[2].Metadata["$correlationId"].Equals(userId.ToString()));
-        Assert.IsTrue(((TaskAdded)pod.UncommitedEvents().ToArray()[1]).Id.Equals(taskId1));
-        Assert.IsTrue(((TaskAdded)pod.UncommitedEvents().ToArray()[2]).Id.Equals(taskId2));
+        Assert.IsTrue(((TaskAddedV1)pod.UncommitedEvents().ToArray()[1]).Id.Equals(taskId1));
+        Assert.IsTrue(((TaskAddedV1)pod.UncommitedEvents().ToArray()[2]).Id.Equals(taskId2));
     }
 
     [Test]
@@ -47,7 +47,7 @@ public class when_managing_tasks
         Assert.IsTrue(pod.UncommitedEvents().Count() == 2);
         Assert.IsTrue(pod.UncommitedEvents().First().Metadata["$correlationId"].Equals(userId.ToString()));
         Assert.IsTrue(pod.UncommitedEvents().ToArray()[1].Metadata["$correlationId"].Equals(userId.ToString()));
-        Assert.IsTrue(((TaskAdded)pod.UncommitedEvents().ToArray()[1]).Id.Equals(taskId1));
+        Assert.IsTrue(((TaskAddedV1)pod.UncommitedEvents().ToArray()[1]).Id.Equals(taskId1));
     }
 
     [Test]
@@ -59,7 +59,7 @@ public class when_managing_tasks
         var pod = BuildTaskPodWith2Tasks(userId.ToString(), _usernameForTest, taskId1, taskId2);
         pod.RemoveTask(BuildRemoveTask(taskId1, pod.AggregateId, _usernameForTest));
         Assert.IsTrue(pod.UncommitedEvents().Count() == 4);
-        Assert.IsTrue(((TaskRemoved)pod.UncommitedEvents().ToArray()[3]).TaskToDeleteId.Equals(taskId1));
+        Assert.IsTrue(((TaskRemovedV1)pod.UncommitedEvents().ToArray()[3]).TaskToDeleteId.Equals(taskId1));
     }
 
     private TaskPod BuildTaskPodWith2Tasks(string userId, string username, Guid taskId1, Guid taskId2)

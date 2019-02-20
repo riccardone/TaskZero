@@ -13,14 +13,16 @@ namespace TaskZero.ReadModels.InMemory
     {
         // This is responsible to keep up-to-date the readmodel.
         // In a real world scenario it could be an ElasticSearch indexer
-        
+
         private readonly IEventStoreConnection _conn;
+        private readonly UserCredentials _credentials;
         public IDictionary<string, IDictionary<string, string>> Cache { get; private set; }
         public event EventHandler LiveSynchStarted;
 
-        public SynchroniserService(IEventStoreConnection conn)
+        public SynchroniserService(IEventStoreConnection conn, UserCredentials credentials)
         {
             _conn = conn;
+            _credentials = credentials;
         }
 
         public async Task Start()
@@ -31,11 +33,6 @@ namespace TaskZero.ReadModels.InMemory
             await _conn.ConnectAsync();
         }
 
-        private void SubscriptionDropped(EventStoreCatchUpSubscription arg1, SubscriptionDropReason arg2, Exception arg3)
-        {
-            SubscribeMe();
-        }
-
         private void _conn_Connected(object sender, ClientConnectionEventArgs e)
         {
             SubscribeMe();
@@ -44,8 +41,31 @@ namespace TaskZero.ReadModels.InMemory
         private void SubscribeMe()
         {
             Cache = new Dictionary<string, IDictionary<string, string>>();
-            _conn.SubscribeToAllFrom(Position.Start, CatchUpSubscriptionSettings.Default, EventAppeared,
-                LiveProcessingStarted, SubscriptionDropped, new UserCredentials("admin", "changeit"));
+            _conn.SubscribeToStreamFrom("$ce-domain", StreamCheckpoint.StreamStart, CatchUpSubscriptionSettings.Default,
+                EventAppeared, LiveProcessingStarted, SubscriptionDropped, _credentials);
+        }
+
+        private void LiveProcessingStarted(EventStoreCatchUpSubscription obj)
+        {
+            OnLiveProcessingStarted(new EventArgs());
+        }
+
+        private Task EventAppeared(EventStoreCatchUpSubscription arg1, ResolvedEvent arg2)
+        {
+            if (arg2.Event == null)
+                return Task.CompletedTask;
+
+            dynamic data = JObject.Parse(Encoding.UTF8.GetString(arg2.Event.Data));
+            dynamic metaData = JObject.Parse(Encoding.UTF8.GetString(arg2.Event.Metadata));
+
+            if (arg2.Event.EventType.Equals("TaskAddedV1"))
+                HandleTaskAdded(data, metaData);
+            if (arg2.Event.EventType.Equals("TaskRemovedV1"))
+                HandleTaskDeleted(data, metaData);
+            if (arg2.Event.EventType.Equals("WrongRemoveTaskRequestedV1"))
+                HandleWrongRemoveTaskRequested(data, metaData);
+
+            return Task.CompletedTask;
         }
 
         private void _conn_Disconnected(object sender, ClientConnectionEventArgs e)
@@ -58,31 +78,14 @@ namespace TaskZero.ReadModels.InMemory
             Console.WriteLine("Reconnecting...");
         }
 
-        private void LiveProcessingStarted(EventStoreCatchUpSubscription obj)
+        private void SubscriptionDropped(EventStoreCatchUpSubscription arg1, SubscriptionDropReason arg2, Exception arg3)
         {
-            OnLiveProcessingStarted(new EventArgs());
+            SubscribeMe();
         }
 
         protected virtual void OnLiveProcessingStarted(EventArgs e)
         {
             LiveSynchStarted?.Invoke(this, e);
-        }
-
-        private Task EventAppeared(EventStoreCatchUpSubscription arg1, ResolvedEvent arg2)
-        {
-            if (arg2.Event.EventStreamId.StartsWith("$"))
-                return Task.CompletedTask;
-
-            dynamic data = JObject.Parse(Encoding.UTF8.GetString(arg2.Event.Data));
-            dynamic metaData = JObject.Parse(Encoding.UTF8.GetString(arg2.Event.Metadata));
-
-            if (arg2.Event.EventType.Equals("TaskAdded"))
-                HandleTaskAdded(data, metaData);
-            if (arg2.Event.EventType.Equals("TaskRemoved"))
-                HandleTaskDeleted(data, metaData);
-            if (arg2.Event.EventType.Equals("WrongRemoveTaskRequested"))
-                HandleWrongRemoveTaskRequested(data, metaData);
-            return Task.CompletedTask;
         }
 
         private void HandleWrongRemoveTaskRequested(dynamic data, dynamic metaData)
@@ -110,7 +113,7 @@ namespace TaskZero.ReadModels.InMemory
                     dueDate = dueDateVal;
 
             var zeroTask = new ZeroTask(data.Title.Value, data.Description.Value, dueDate,
-                (Priority) data.Priority.Value, metaData.source.Value);
+                (Priority)data.Priority.Value, metaData.source.Value);
 
             IDictionary<string, string> todoPod;
             if (!Cache.ContainsKey(metaData.username.Value))

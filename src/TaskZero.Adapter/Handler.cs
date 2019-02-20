@@ -1,13 +1,14 @@
-﻿using System;
-using System.Linq;
-using TaskZero.Domain;
+﻿using TaskZero.Domain;
 using TaskZero.Domain.Aggregates;
 using TaskZero.Domain.Messages.Commands;
-using TaskZero.Domain.Messages.Events;
 
 namespace TaskZero.Adapter
 {
-    public class Handler : IHandle<CreateTaskPod>, IHandle<AddNewTask>, IHandle<RemoveTask>
+    public class Handler :
+        IHandle<CreateTaskPod>,
+        IHandle<AddNewTask>,
+        IHandle<RemoveTask>,
+        IHandle<DeleteTaskPod>
     {
         private readonly IDomainRepository _repo;
 
@@ -26,7 +27,7 @@ namespace TaskZero.Adapter
             catch (AggregateNotFoundException)
             {
                 taskPod = TaskPod.Create(command);
-                _repo.SaveAsync(taskPod).Wait();
+                _repo.Save(taskPod).Wait();
             }
             return taskPod;
         }
@@ -35,7 +36,7 @@ namespace TaskZero.Adapter
         {
             var taskPod = _repo.GetById<TaskPod>(command.Metadata["$correlationId"]);
             taskPod.AddTask(command);
-            _repo.SaveAsync(taskPod);
+            _repo.Save(taskPod);
             return taskPod;
         }
 
@@ -43,7 +44,14 @@ namespace TaskZero.Adapter
         {
             var taskPod = _repo.GetById<TaskPod>(command.Metadata["$correlationId"]);
             taskPod.RemoveTask(command);
-            _repo.SaveAsync(taskPod);
+            _repo.Save(taskPod);
+            return taskPod;
+        }
+
+        public IAggregate Handle(DeleteTaskPod command)
+        {
+            var taskPod = _repo.GetById<TaskPod>(command.Id);
+            _repo.DeleteAggregate<TaskPod>(command.Id, true);
             return taskPod;
         }
     }

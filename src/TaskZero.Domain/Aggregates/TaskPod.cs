@@ -15,30 +15,30 @@ namespace TaskZero.Domain.Aggregates
         public TaskPod()
         {
             _tasks = new Dictionary<Guid, Task>();
-            RegisterTransition<TaskPodCreated>(Apply);
-            RegisterTransition<TaskAdded>(Apply);
-            RegisterTransition<TaskRemoved>(Apply);
-            RegisterTransition<WrongRemoveTaskRequested>(Apply);
+            RegisterTransition<TaskPodCreatedV1>(Apply);
+            RegisterTransition<TaskAddedV1>(Apply);
+            RegisterTransition<TaskRemovedV1>(Apply);
+            RegisterTransition<WrongRemoveTaskRequestedV1>(Apply);
         }
 
-        private void Apply(WrongRemoveTaskRequested obj) { }
+        private void Apply(WrongRemoveTaskRequestedV1 obj) { }
 
-        public TaskPod(TaskPodCreated evt) : this()
+        public TaskPod(TaskPodCreatedV1 evt) : this()
         {
             RaiseEvent(evt);
         }
 
-        private void Apply(TaskRemoved obj)
+        private void Apply(TaskRemovedV1 obj)
         {
             _tasks.Remove(obj.TaskToDeleteId);
         }
 
-        private void Apply(TaskAdded obj)
+        private void Apply(TaskAddedV1 obj)
         {
             _tasks.Add(obj.Id, new Task(obj.Title, obj.Description, obj.DueDate, obj.Priority));
         }
 
-        private void Apply(TaskPodCreated obj)
+        private void Apply(TaskPodCreatedV1 obj)
         {
             _correlationId = obj.Metadata["$correlationId"];
             _userName = obj.Metadata["username"];
@@ -50,7 +50,7 @@ namespace TaskZero.Domain.Aggregates
             Ensure.NotNullOrEmpty(cmd.Metadata["$correlationId"], "$correlationId");
             if (!cmd.Metadata["username"].Equals(_userName))
                 return;
-            RaiseEvent(new TaskAdded(cmd.TaskId, cmd.Title, cmd.Description, cmd.DueDate, cmd.Priority, cmd.Metadata));
+            RaiseEvent(new TaskAddedV1(cmd.TaskId, cmd.Title, cmd.Description, cmd.DueDate, cmd.Priority, cmd.Metadata));
         }
 
         public void RemoveTask(RemoveTask cmd)
@@ -61,10 +61,10 @@ namespace TaskZero.Domain.Aggregates
                 return;
             if (!_tasks.ContainsKey(cmd.Id))
             {
-                RaiseEvent(new WrongRemoveTaskRequested(cmd.Id, cmd.Metadata));
+                RaiseEvent(new WrongRemoveTaskRequestedV1(cmd.Id, cmd.Metadata));
                 return;
             }
-            RaiseEvent(new TaskRemoved(cmd.Id, cmd.Metadata));
+            RaiseEvent(new TaskRemovedV1(cmd.Id, cmd.Metadata));
         }
 
         public static TaskPod Create(CreateTaskPod cmd)
@@ -72,7 +72,7 @@ namespace TaskZero.Domain.Aggregates
             CheckCommonPreconditions(cmd);
             cmd.Metadata.Add("$correlationId", cmd.Id);
             cmd.Metadata.Add("applies", cmd.CreatedOn.ToString("o"));
-            return new TaskPod(new TaskPodCreated(cmd.Metadata));
+            return new TaskPod(new TaskPodCreatedV1(cmd.Metadata));
         }
 
         private static void CheckCommonPreconditions(Command cmd)

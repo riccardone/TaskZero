@@ -2,11 +2,11 @@
 
 namespace TaskZero.Domain.Messages.Events
 {
-    public class TaskPodCreated : Event
+    public class TaskPodCreatedV1 : Event
     {
         public IDictionary<string, string> Metadata { get; }
 
-        public TaskPodCreated(IDictionary<string, string> metadata)
+        public TaskPodCreatedV1(IDictionary<string, string> metadata)
         {
             Metadata = metadata;
         }
