@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace TaskZero.Domain.Messages.Events
 {
-    public class TaskDeleted : Event
+    public class TaskRemoved : Event
     {
         public Guid TaskToDeleteId { get; }
         public IDictionary<string, string> Metadata { get; }
 
-        public TaskDeleted(Guid taskToDeleteId, IDictionary<string, string> metadata)
+        public TaskRemoved(Guid taskToDeleteId, IDictionary<string, string> metadata)
         {
             TaskToDeleteId = taskToDeleteId;
             Metadata = metadata;

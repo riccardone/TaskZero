@@ -10,13 +10,14 @@ namespace TaskZero.Domain.Aggregates
         public override string AggregateId => _correlationId;
         private string _correlationId;
         private readonly IDictionary<Guid, Task> _tasks;
+        private string _userName;
 
         public TaskPod()
         {
             _tasks = new Dictionary<Guid, Task>();
             RegisterTransition<TaskPodCreated>(Apply);
             RegisterTransition<TaskAdded>(Apply);
-            RegisterTransition<TaskDeleted>(Apply);
+            RegisterTransition<TaskRemoved>(Apply);
         }
 
         public TaskPod(TaskPodCreated evt) : this()
@@ -24,7 +25,7 @@ namespace TaskZero.Domain.Aggregates
             RaiseEvent(evt);
         }
 
-        private void Apply(TaskDeleted obj)
+        private void Apply(TaskRemoved obj)
         {
             _tasks.Remove(obj.TaskToDeleteId);
         }
@@ -37,11 +38,15 @@ namespace TaskZero.Domain.Aggregates
         private void Apply(TaskPodCreated obj)
         {
             _correlationId = obj.Metadata["$correlationId"];
+            _userName = obj.Metadata["username"];
         }
 
         public List<Event> AddTask(AddNewTask cmd)
         {
-            // TODO write your validation logic
+            CheckCommonPreconditions(cmd);
+            Ensure.NotNullOrEmpty(cmd.Metadata["$correlationId"], "$correlationId");
+            if (!cmd.Metadata["username"].Equals(_userName))
+                return new List<Event>();
             var evt = new TaskAdded(cmd.TaskId, cmd.Title, cmd.Description, cmd.DueDate, cmd.Priority, cmd.Metadata);
             RaiseEvent(evt);
             return new List<Event> {evt};
@@ -49,8 +54,11 @@ namespace TaskZero.Domain.Aggregates
 
         public List<Event> RemoveTask(RemoveTask cmd)
         {
-            // TODO write your validation logic
-            var evt = new TaskDeleted(cmd.Id, cmd.Metadata);
+            CheckCommonPreconditions(cmd);
+            Ensure.NotNullOrEmpty(cmd.Metadata["$correlationId"], "$correlationId");
+            if (!cmd.Metadata["username"].Equals(_userName))
+                return new List<Event>();
+            var evt = new TaskRemoved(cmd.Id, cmd.Metadata);
             if (!_tasks.ContainsKey(cmd.Id))
                 return new List<Event>();
             RaiseEvent(evt);
@@ -59,10 +67,17 @@ namespace TaskZero.Domain.Aggregates
 
         public static TaskPod Create(CreateTaskPod cmd)
         {
-            // TODO write your validation logic
+            CheckCommonPreconditions(cmd);
             cmd.Metadata.Add("$correlationId", cmd.Id);
             cmd.Metadata.Add("applies", cmd.CreatedOn.ToString("o"));
             return new TaskPod(new TaskPodCreated(cmd.Metadata));
+        }
+
+        private static void CheckCommonPreconditions(Command cmd)
+        {
+            Ensure.NotNull(cmd, nameof(cmd));
+            Ensure.NotNull(cmd.Metadata, nameof(cmd.Metadata));
+            Ensure.NotNullOrEmpty(cmd.Metadata["username"], "username");
         }
     }
 }
