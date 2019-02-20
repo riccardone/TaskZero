@@ -3,7 +3,7 @@ A fully working sample C# .Net Core Console App using Event Sourcing, CQRS patte
   
 # Run  
 You can build and run the app with the following command:  
-dotnet run TaskZero.dll <optional-youeventstorelink-default-localhost>  
+> dotnet run TaskZero.dll <optional-youeventstorelink-default-localhost>  
   
 To start an Event Store instance, download the binaries from https://eventstore.org/downloads/ and run it starting default projections:  
   
