@@ -15,4 +15,10 @@ Example on Windows:
 > EventStore.ClusterNode.exe --start-standard-projections  
   
 Linux  
-> mono EventStore.ClusterNode.exe --start-standard-projections
+> mono EventStore.ClusterNode.exe --start-standard-projections  
+  
+# References  
+This project's patterns are discussed in the following blog's articles  
+http://www.dinuzzo.co.uk/2019/01/12/event-sourcing-step-by-step/  
+http://www.dinuzzo.co.uk/2017/04/28/domain-driven-design-event-sourcing-and-micro-services-explained-for-developers/  
+http://www.dinuzzo.co.uk/2015/08/21/ddd-event-sourcing-commands-and-events-handlers-responsabilities/
