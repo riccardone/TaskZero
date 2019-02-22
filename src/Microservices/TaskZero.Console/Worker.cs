@@ -3,25 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using TaskZero.Adapter;
-using TaskZero.Domain.Messages.Commands;
+using Newtonsoft.Json;
 using TaskZero.ReadModels.InMemory;
+using TaskZero.ReadModels.InMemory.Model;
 
 namespace TaskZero.Console
 {
     public class Worker
     {
         private readonly SynchroniserService _synchroniserService;
-        private readonly Handler _handler;
+        private readonly IMessageSender _sender;
         private readonly string _sourceName;
         private string _userName;
         private string _correlationId;
 
-        public Worker(string sourceName, SynchroniserService synchroniserService, Handler handler)
+        public Worker(string sourceName, SynchroniserService synchroniserService, IMessageSender sender)
         {
             _sourceName = sourceName;
             _synchroniserService = synchroniserService;
-            _handler = handler;
+            _sender = sender;
             InitReadModel();
         }
 
@@ -31,9 +31,15 @@ namespace TaskZero.Console
             _userName = System.Console.ReadLine();
             _correlationId = Deterministic.Create(Deterministic.Namespaces.Commands, Encoding.ASCII.GetBytes(_userName))
                 .ToString();
-            _handler.Handle(new CreateTaskPod(_correlationId, DateTime.Now,
-                new Dictionary<string, string> {{"source", _sourceName}, {"username", _userName } }));
-            RunToDoView(_handler);
+            _sender.Post("api/v1/input",
+                JsonConvert.SerializeObject(new Dictionary<string, string>
+                {
+                    {"correlationid", _correlationId},
+                    {"applies", DateTime.Now.ToString("o")},
+                    {"source", _sourceName},
+                    {"username", _userName}
+                }));
+            RunToDoView();
         }
 
         private void InitReadModel()
@@ -47,7 +53,7 @@ namespace TaskZero.Console
             // Console.WriteLine("Cache ready");
         }
 
-        private void RunToDoView(Handler handler)
+        private void RunToDoView()
         {
             do
             {
@@ -75,12 +81,12 @@ namespace TaskZero.Console
                 switch (key.Key)
                 {
                     case ConsoleKey.A:
-                        handler.Handle(BuildAddNewTaskCommand());
+                        _sender.Post("AddNewTask", BuildAddNewTaskCommand());
                         break;
                     case ConsoleKey.D:
                         var remove = BuildRemoveTask();
                         if (remove != null)
-                            handler.Handle(remove);
+                            _sender.Post("RemoveTask", remove);
                         break;
                     case ConsoleKey.C:
                         System.Console.Clear();
@@ -90,14 +96,7 @@ namespace TaskZero.Console
                         var delete = BuildDeleteTaskPod();
                         if (delete != null)
                         {
-                            try
-                            {
-                                handler.Handle(delete);
-                            }
-                            catch (Exception e)
-                            {
-                                System.Console.WriteLine($"TaskPod {_userName} has been already deleted");
-                            }
+                            _sender.Post("DeleteTaskPod", delete);
                             System.Console.Clear();
                             Run();
                         }
@@ -106,42 +105,43 @@ namespace TaskZero.Console
             } while (true);
         }
 
-        private DeleteTaskPod BuildDeleteTaskPod()
+        private Dictionary<string, string> BuildDeleteTaskPod()
         {
             System.Console.WriteLine($"Are you sure that you want permanently delete {_userName}'s TODO and its content?");
             System.Console.WriteLine($"You will not be able to reuse the same delete {_userName} name for another TaskPod (Y to confirm, N to cancel)");
             var key = System.Console.ReadKey();
             if (key.Key == ConsoleKey.Y)
             {
-                return new DeleteTaskPod(_correlationId, new Dictionary<string, string>
+                return new Dictionary<string, string>
                 {
                     {"$correlationId", _correlationId},
                     {"source", _sourceName},
                     {"username", _userName}
-                });
+                };
             }
             return null;
         }
 
-        private RemoveTask BuildRemoveTask()
+        private Dictionary<string, string> BuildRemoveTask()
         {
             System.Console.WriteLine("Task ID?");
             var idText = System.Console.ReadLine();
             if (Guid.TryParse(idText, out var idToDelete))
             {
-                return new RemoveTask(idToDelete, new Dictionary<string, string>
+                return new Dictionary<string, string>
                 {
+                    {"idtodelete", idToDelete.ToString()},
                     {"$correlationId", _correlationId},
                     {"source", _sourceName},
                     {"username", _userName}
-                });
+                };
             }
             System.Console.WriteLine("Not valid id");
             Thread.Sleep(1000);
             return null;
         }
 
-        private AddNewTask BuildAddNewTaskCommand()
+        private Dictionary<string, string> BuildAddNewTaskCommand()
         {
             System.Console.WriteLine("Title? (default: test)");
             var title = System.Console.ReadLine();
@@ -157,13 +157,17 @@ namespace TaskZero.Console
                 dueDate = dueDateVal;
             System.Console.WriteLine("Priority? NotSet=0, Low=1, Normal=2, High=3, Urgent=4 (default NotSet=0)");
             Enum.TryParse(System.Console.ReadLine(), out Priority priority);
-            return new AddNewTask(Guid.NewGuid(), title, description, dueDate, priority,
-                new Dictionary<string, string>
-                {
-                    {"$correlationId", _correlationId},
-                    {"source", _sourceName},
-                    {"username", _userName}
-                });
+            return new Dictionary<string, string>
+            {
+                {"id", Guid.NewGuid().ToString()},
+                {"title", title},
+                {"description", description},
+                {"duedate", dueDate?.ToString("o")},
+                {"priority", priority.ToString()},
+                {"$correlationId", _correlationId},
+                {"source", _sourceName},
+                {"username", _userName}
+            };
         }
     }
 }

@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Net;
+using System.Linq;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
-using TaskZero.Repository.EventStore;
+using TaskZero.ReadModels.InMemory;
 
-namespace TaskZero.Adapter.Host
+namespace TaskZero.ReadModel.Host
 {
     class Program
     {
@@ -23,18 +23,36 @@ namespace TaskZero.Adapter.Host
                 es = args[0];
             _uri = new Uri($"tcp://{es}");
 
-            var domainConnection = BuildConnection("es-taskzero-domain", _uri);
-            domainConnection.ConnectAsync().Wait();
+            
             var inputConnection = BuildConnection("es-taskzero-input", _uri);
             inputConnection.ConnectAsync().Wait();
-            var domainRepository = new EventStoreDomainRepository("domain", domainConnection);
 
-            var endpoint = new EndPoint(inputConnection, domainRepository, new Handler(domainRepository),
-                new UserCredentials("admin", "changeit"));
-            endpoint.Start();
+            var synchroniserService =
+                new SynchroniserService(inputConnection, new UserCredentials("admin", "changeit"));
+            synchroniserService.Start().Wait();
 
-            Log.Info("Press enter to exit");
-            Console.ReadLine();
+            do
+            {
+                Console.WriteLine("Press R to refresh the view");
+                Console.WriteLine("Press CTRL+C to exit");
+                var key = Console.ReadKey();
+                if (key.Key == ConsoleKey.R)
+                {
+                    RefreshView(synchroniserService);
+                }
+            } while (true);
+        }
+
+        private static void RefreshView(SynchroniserService synchroniserService)
+        {
+            foreach (var g in synchroniserService.Cache.GroupBy(a => a.Key))
+            {
+                Log.Info($"----------{g.Key}'s-TODO-------------------");
+                foreach (var todo in g)
+                foreach (var task in todo.Value)
+                    Log.Info($"Id: {task.Key}, {task.Value}");
+            }
+            Log.Info($"------------------------------------");
         }
 
         private static IEventStoreConnection BuildConnection(string name, Uri uri)

@@ -1,9 +1,7 @@
 ﻿using System;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
-using TaskZero.Adapter;
 using TaskZero.ReadModels.InMemory;
-using TaskZero.Repository.EventStore;
 
 namespace TaskZero.Console
 {
@@ -21,11 +19,10 @@ namespace TaskZero.Console
             {
                 var synchroniserService = new SynchroniserService(BuildConnection("es-taskzero-syncroniser", _uri),
                     new UserCredentials("admin", "changeit"));
-                var domainConnection = BuildConnection("es-taskzero-domain", _uri);
-                domainConnection.ConnectAsync().Wait();
-                var domainRepository = new EventStoreDomainRepository("domain", domainConnection);
-                var handler = new Handler(domainRepository);
-                var worker = new Worker("TaskZero.Console", synchroniserService, handler);
+                var senderConnection = BuildConnection("es-taskzero-sender", _uri);
+                senderConnection.ConnectAsync().Wait();
+                var worker = new Worker("TaskZero.Console", synchroniserService,
+                    new TcpMessageSender(senderConnection, "input-taskzero"));
                 worker.Run();
             }
             catch (Exception e)

@@ -9,4 +9,10 @@
     <PackageReference Include="nlog" Version="4.5.11" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TaskZero.Adapter\TaskZero.Adapter.csproj" />
+    <ProjectReference Include="..\TaskZero.Domain\TaskZero.Domain.csproj" />
+    <ProjectReference Include="..\TaskZero.Repository.EventStore\TaskZero.Repository.EventStore.csproj" />
+  </ItemGroup>
+
 </Project>
