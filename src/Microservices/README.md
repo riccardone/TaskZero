@@ -12,10 +12,10 @@ You can build and run the app with the following command:
 To start an Event Store instance, download the binaries from https://eventstore.org/downloads/ and run it starting default projections:  
   
 Example on Windows:  
-> EventStore.ClusterNode.exe --start-standard-projections  
+> EventStore.ClusterNode.exe --run-projections=system
   
 Linux  
-> mono EventStore.ClusterNode.exe --start-standard-projections  
+> mono EventStore.ClusterNode.exe --run-projections=system
   
 # References  
 This project's patterns are discussed in the following blog's articles  

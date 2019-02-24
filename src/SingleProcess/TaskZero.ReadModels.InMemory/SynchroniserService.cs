@@ -41,7 +41,9 @@ namespace TaskZero.ReadModels.InMemory
         private void SubscribeMe()
         {
             Cache = new Dictionary<string, IDictionary<string, string>>();
-            _conn.SubscribeToStreamFrom("$ce-domain", StreamCheckpoint.StreamStart, CatchUpSubscriptionSettings.Default,
+            //_conn.SubscribeToStreamFrom("$ce-domain", StreamCheckpoint.StreamStart, CatchUpSubscriptionSettings.Default,
+            //    EventAppeared, LiveProcessingStarted, SubscriptionDropped, _credentials);
+            _conn.SubscribeToAllFrom(Position.Start, CatchUpSubscriptionSettings.Default,
                 EventAppeared, LiveProcessingStarted, SubscriptionDropped, _credentials);
         }
 
@@ -52,7 +54,7 @@ namespace TaskZero.ReadModels.InMemory
 
         private Task EventAppeared(EventStoreCatchUpSubscription arg1, ResolvedEvent arg2)
         {
-            if (arg2.Event == null)
+            if (arg2.Event == null || arg2.Event.EventStreamId.StartsWith("$") || arg2.Event.EventType.StartsWith("$"))
                 return Task.CompletedTask;
 
             dynamic data = JObject.Parse(Encoding.UTF8.GetString(arg2.Event.Data));
