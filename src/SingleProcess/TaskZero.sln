@@ -13,7 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskZero.Tests", "TaskZero.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskZero.ReadModels.InMemory", "TaskZero.ReadModels.InMemory\TaskZero.ReadModels.InMemory.csproj", "{E1163D21-2552-423A-AAF7-2E486AE1744D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskZero.Adapter", "TaskZero.Adapter\TaskZero.Adapter.csproj", "{2B242E45-6319-475E-A4AA-B65EF5E1CF45}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskZero.Adapter", "TaskZero.Adapter\TaskZero.Adapter.csproj", "{2B242E45-6319-475E-A4AA-B65EF5E1CF45}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskZero.ReadModels.Elastic", "TaskZero.ReadModels.Elastic\TaskZero.ReadModels.Elastic.csproj", "{9C19C99E-D5A1-438F-B961-E46AA2371E18}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{2B242E45-6319-475E-A4AA-B65EF5E1CF45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B242E45-6319-475E-A4AA-B65EF5E1CF45}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2B242E45-6319-475E-A4AA-B65EF5E1CF45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C19C99E-D5A1-438F-B961-E46AA2371E18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C19C99E-D5A1-438F-B961-E46AA2371E18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C19C99E-D5A1-438F-B961-E46AA2371E18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C19C99E-D5A1-438F-B961-E46AA2371E18}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
