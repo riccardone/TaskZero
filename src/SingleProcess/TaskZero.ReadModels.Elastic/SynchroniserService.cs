@@ -4,28 +4,25 @@ using System.Text;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.SystemData;
-using Nest;
 using Newtonsoft.Json.Linq;
-using TaskZero.ReadModels.InMemory.Model;
+using TaskZero.ReadModels.Elastic.Model;
 
 namespace TaskZero.ReadModels.Elastic
 {
     public class SynchroniserService
     {
-        // This is responsible to keep up-to-date the readmodel.
-        // In a real world scenario it could be an ElasticSearch indexer
+        // This is responsible to keep up-to-date the readmodel in an Elastic Search index
 
         private readonly IEventStoreConnection _conn;
         private readonly UserCredentials _credentials;
-        private readonly IElasticClient _elasticClient;
-        public IDictionary<string, IDictionary<string, string>> Cache { get; private set; }
+        private readonly IIndexer<ZeroTask> _indexer;
         public event EventHandler LiveSynchStarted;
 
-        public SynchroniserService(IEventStoreConnection conn, UserCredentials credentials, IElasticClient elasticClient)
+        public SynchroniserService(IEventStoreConnection conn, UserCredentials credentials, IIndexer<ZeroTask> indexer)
         {
             _conn = conn;
             _credentials = credentials;
-            _elasticClient = elasticClient;
+            _indexer = indexer;
         }
 
         public async Task Start()
@@ -43,7 +40,6 @@ namespace TaskZero.ReadModels.Elastic
 
         private void SubscribeMe()
         {
-            Cache = new Dictionary<string, IDictionary<string, string>>();
             //_conn.SubscribeToStreamFrom("$ce-domain", StreamCheckpoint.StreamStart, CatchUpSubscriptionSettings.Default,
             //    EventAppeared, LiveProcessingStarted, SubscriptionDropped, _credentials);
             _conn.SubscribeToAllFrom(Position.Start, CatchUpSubscriptionSettings.Default,
@@ -83,7 +79,8 @@ namespace TaskZero.ReadModels.Elastic
             Console.WriteLine("Reconnecting...");
         }
 
-        private void SubscriptionDropped(EventStoreCatchUpSubscription arg1, SubscriptionDropReason arg2, Exception arg3)
+        private void SubscriptionDropped(EventStoreCatchUpSubscription arg1, SubscriptionDropReason arg2,
+            Exception arg3)
         {
             SubscribeMe();
         }
@@ -95,18 +92,12 @@ namespace TaskZero.ReadModels.Elastic
 
         private void HandleWrongRemoveTaskRequested(dynamic data, dynamic metaData)
         {
-            if (!Cache.ContainsKey(metaData.username.Value))
-                return;
-            IDictionary<string, string> todoPod = Cache[metaData.username.Value];
-            todoPod.Add(data.TaskToDeleteId.Value, $"TaskId '{data.TaskToDeleteId.Value}' not found in your task pod");
+            // Log this info in a event index?
         }
 
         private void HandleTaskDeleted(dynamic data, dynamic metaData)
         {
-            if (!Cache.ContainsKey(metaData.username.Value))
-                return;
-            IDictionary<string, string> todoPod = Cache[metaData.username.Value];
-            todoPod.Remove(data.TaskToDeleteId.Value);
+            _indexer.Remove(data.TaskToDeleteId.Value);
         }
 
         private void HandleTaskAdded(dynamic data, dynamic metaData)
@@ -117,21 +108,10 @@ namespace TaskZero.ReadModels.Elastic
                 if (DateTime.TryParse(data.DueDate.Value.ToString(), out DateTime dueDateVal))
                     dueDate = dueDateVal;
 
-            var zeroTask = new ZeroTask(data.Title.Value, data.Description.Value, dueDate,
-                (Priority)data.Priority.Value, metaData.source.Value);
+            var zeroTask = new ZeroTask(data.Id.Value, metaData.username.Value, data.Title.Value, data.Description.Value, dueDate,
+                ((Priority) data.Priority.Value).ToString(), metaData.source.Value, metaData["$correlationId"].Value, metaData["applies"].Value);
 
-            IDictionary<string, string> todoPod;
-            if (!Cache.ContainsKey(metaData.username.Value))
-            {
-                todoPod = new Dictionary<string, string>();
-                Cache.Add(metaData.username.Value, todoPod);
-            }
-            else
-            {
-                todoPod = Cache[metaData.username.Value];
-            }
-
-            todoPod.Add(data.Id.Value, zeroTask.ToString());
+            _indexer.Index(zeroTask);
         }
     }
 }

@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TaskZero.Adapter\TaskZero.Adapter.csproj" />
     <ProjectReference Include="..\TaskZero.Domain\TaskZero.Domain.csproj" />
+    <ProjectReference Include="..\TaskZero.ReadModels.Elastic\TaskZero.ReadModels.Elastic.csproj" />
     <ProjectReference Include="..\TaskZero.ReadModels.InMemory\TaskZero.ReadModels.InMemory.csproj" />
     <ProjectReference Include="..\TaskZero.Repository.EventStore\TaskZero.Repository.EventStore.csproj" />
   </ItemGroup>

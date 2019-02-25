@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="EventStore.Client" Version="5.0.1" />
+    <PackageReference Include="microsoft.csharp" Version="4.5.0" />
     <PackageReference Include="nest" Version="6.5.0" />
   </ItemGroup>
 
