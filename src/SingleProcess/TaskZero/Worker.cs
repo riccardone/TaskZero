@@ -11,16 +11,18 @@ namespace TaskZero
 {
     public class Worker
     {
-        private readonly SynchroniserService _synchroniserService;
+        private readonly SynchroniserService _inMemorySynchroniser;
+        private readonly ReadModels.Elastic.SynchroniserService _elasticSynchroniser;
         private readonly Handler _handler;
         private readonly string _sourceName;
         private string _userName;
         private string _correlationId;
 
-        public Worker(string sourceName, SynchroniserService synchroniserService, Handler handler)
+        public Worker(string sourceName, SynchroniserService inMemorySynchroniser, ReadModels.Elastic.SynchroniserService elasticSynchroniser, Handler handler)
         {
             _sourceName = sourceName;
-            _synchroniserService = synchroniserService;
+            _inMemorySynchroniser = inMemorySynchroniser;
+            _elasticSynchroniser = elasticSynchroniser;
             _handler = handler;
             InitReadModel();
         }
@@ -38,8 +40,9 @@ namespace TaskZero
 
         private void InitReadModel()
         {
-            _synchroniserService.LiveSynchStarted += SyncroniserService_LiveSynchStarted;
-            _synchroniserService.Start();
+            _inMemorySynchroniser.LiveSynchStarted += SyncroniserService_LiveSynchStarted;
+            _inMemorySynchroniser.Start();
+            _elasticSynchroniser.Start();
         }
 
         private static void SyncroniserService_LiveSynchStarted(object sender, EventArgs e)
@@ -55,7 +58,7 @@ namespace TaskZero
                 // Watch out for the Eventual Consistency in case there is not enough time for the synchroniser to keep the inmemory cache up-to-date
                 // This is a console app and I can't update the UI with async code :)
                 Thread.Sleep(200);
-                foreach (var g in _synchroniserService.Cache.GroupBy(a => a.Key))
+                foreach (var g in _inMemorySynchroniser.Cache.GroupBy(a => a.Key))
                 {
                     Console.WriteLine(g.Key.Equals(_userName)
                         ? $"----------{g.Key}'s-TODO-------------------"
@@ -151,8 +154,8 @@ namespace TaskZero
             var description = Console.ReadLine();
             if (string.IsNullOrWhiteSpace(description))
                 description = "test";
-            Console.WriteLine("Due Date? yyyy-mm-dd (Default: null)");
-            DateTime? dueDate = null;
+            Console.WriteLine("Due Date? yyyy-mm-dd (Default: yesterday same time)");
+            DateTime? dueDate = DateTime.Now.AddDays(-1);
             if (DateTime.TryParse(Console.ReadLine(), out var dueDateVal))
                 dueDate = dueDateVal;
             Console.WriteLine("Priority? NotSet=0, Low=1, Normal=2, High=3, Urgent=4 (default NotSet=0)");

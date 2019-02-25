@@ -15,7 +15,7 @@ Example on Windows:
 > EventStore.ClusterNode.exe 
   
 Linux  
-> mono EventStore.ClusterNode.exe 
+> mono EventStore.ClusterNode.exe --start-standard-projections  
   
 # References  
 This project's patterns are discussed in the following blog's articles  

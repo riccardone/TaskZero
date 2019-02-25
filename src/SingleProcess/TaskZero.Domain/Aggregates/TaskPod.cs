@@ -50,6 +50,8 @@ namespace TaskZero.Domain.Aggregates
             Ensure.NotNullOrEmpty(cmd.Metadata["$correlationId"], "$correlationId");
             if (!cmd.Metadata["username"].Equals(_userName))
                 return;
+            if (!cmd.Metadata.ContainsKey("applies"))
+                cmd.Metadata["applies"] = DateTime.UtcNow.ToString("o");
             RaiseEvent(new TaskAddedV1(cmd.TaskId, cmd.Title, cmd.Description, cmd.DueDate, cmd.Priority, cmd.Metadata));
         }
 
