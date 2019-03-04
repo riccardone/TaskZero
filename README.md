@@ -5,9 +5,6 @@ The synchroniser keep up to date the current state in 2 different read-models: a
 The adapter, the domain, the synchronisers are separate parts all hosted in the same single process at run time. That is based on requirement. It shows how you can do Event Sourcing + CQRS without a Distributed Architecture using separate Microservices. I will create in a separate repository a version with all these parts split in separate Microservices working toghether.  
    
 # Run  
-You can build and run the app with the following command:  
-> dotnet TaskZero.dll <youreventstorelink> <yourelasticsearchlink>  
-  
 Example running without ElasticSearch with EventStore on local host:  
 > dotnet TaskZero.dll  
   
