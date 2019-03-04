@@ -11,14 +11,14 @@ namespace TaskZero
 {
     public class Worker
     {
-        private readonly SynchroniserService _inMemorySynchroniser;
-        private readonly ReadModels.Elastic.SynchroniserService _elasticSynchroniser;
+        private readonly SyncroniserService _inMemorySynchroniser;
+        private readonly ReadModels.Elastic.SyncroniserService _elasticSynchroniser;
         private readonly Handler _handler;
         private readonly string _sourceName;
         private string _userName;
         private string _correlationId;
 
-        public Worker(string sourceName, SynchroniserService inMemorySynchroniser, ReadModels.Elastic.SynchroniserService elasticSynchroniser, Handler handler)
+        public Worker(string sourceName, SyncroniserService inMemorySynchroniser, ReadModels.Elastic.SyncroniserService elasticSynchroniser, Handler handler)
         {
             _sourceName = sourceName;
             _inMemorySynchroniser = inMemorySynchroniser;

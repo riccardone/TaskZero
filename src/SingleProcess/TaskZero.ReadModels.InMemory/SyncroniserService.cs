@@ -9,7 +9,7 @@ using TaskZero.ReadModels.InMemory.Model;
 
 namespace TaskZero.ReadModels.InMemory
 {
-    public class SynchroniserService
+    public class SyncroniserService
     {
         // This is responsible to keep up-to-date the readmodel.
         // In a real world scenario it could be an ElasticSearch indexer
@@ -19,7 +19,7 @@ namespace TaskZero.ReadModels.InMemory
         public IDictionary<string, IDictionary<string, string>> Cache { get; private set; }
         public event EventHandler LiveSynchStarted;
 
-        public SynchroniserService(IEventStoreConnection conn, UserCredentials credentials)
+        public SyncroniserService(IEventStoreConnection conn, UserCredentials credentials)
         {
             _conn = conn;
             _credentials = credentials;
@@ -77,7 +77,7 @@ namespace TaskZero.ReadModels.InMemory
 
         private void _conn_Reconnecting(object sender, ClientReconnectingEventArgs e)
         {
-            Console.WriteLine("Reconnecting...");
+            Console.WriteLine("Reconnecting to EventStore...");
         }
 
         private void SubscriptionDropped(EventStoreCatchUpSubscription arg1, SubscriptionDropReason arg2, Exception arg3)

@@ -9,7 +9,7 @@ using TaskZero.ReadModels.Elastic.Model;
 
 namespace TaskZero.ReadModels.Elastic
 {
-    public class SynchroniserService
+    public class SyncroniserService
     {
         // This is responsible to keep up-to-date the readmodel in an Elastic Search index
 
@@ -18,7 +18,7 @@ namespace TaskZero.ReadModels.Elastic
         private readonly IIndexer<ZeroTask> _indexer;
         public event EventHandler LiveSynchStarted;
 
-        public SynchroniserService(IEventStoreConnection conn, UserCredentials credentials, IIndexer<ZeroTask> indexer)
+        public SyncroniserService(IEventStoreConnection conn, UserCredentials credentials, IIndexer<ZeroTask> indexer)
         {
             _conn = conn;
             _credentials = credentials;
@@ -76,7 +76,7 @@ namespace TaskZero.ReadModels.Elastic
 
         private void _conn_Reconnecting(object sender, ClientReconnectingEventArgs e)
         {
-            Console.WriteLine("Reconnecting...");
+            Console.WriteLine("Reconnecting to EventStore...");
         }
 
         private void SubscriptionDropped(EventStoreCatchUpSubscription arg1, SubscriptionDropReason arg2,
