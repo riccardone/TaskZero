@@ -9,24 +9,30 @@ namespace TaskZero
 {
     class Program
     {
-        private static Uri _uri;
+        private static Uri _eventStoreUri;
+        private static Uri _elasticSearchUri;
 
         static void Main(string[] args)
         {
-            var es = "localhost:1113";
-            if (args.Length > 0)
-                es = args[0];
-            _uri = new Uri($"tcp://{es}");
             try
             {
-                var inMemorySynchronizer = new ReadModels.InMemory.SyncroniserService(BuildConnection("taskzero-synchronizer-inmemory", _uri),
+                var eventStore = "tcp://localhost:1113";
+                if (args.Length > 0)
+                    eventStore = args[0];
+                _eventStoreUri = new Uri(eventStore);
+                if (args.Length > 1)
+                    _elasticSearchUri = new Uri(args[1]);
+
+                var inMemorySynchronizer = new ReadModels.InMemory.SyncroniserService(BuildConnection("taskzero-synchronizer-inmemory", _eventStoreUri),
                     new UserCredentials("admin", "changeit"));
-                var elasticSearchSynchronizer = new ReadModels.Elastic.SyncroniserService(BuildConnection("taskzero-synchronizer-elastic", _uri),
-                    new UserCredentials("admin", "changeit"), new ReadModels.Elastic.Indexer<ReadModels.Elastic.Model.ZeroTask>(2000,
-                        new ElasticClient(new Uri("http://localhost:9200")), "taskzero-tasks"));
+                ReadModels.Elastic.SyncroniserService elasticSearchSynchronizer = null;
+                if (_elasticSearchUri != null)
+                    elasticSearchSynchronizer = new ReadModels.Elastic.SyncroniserService(BuildConnection("taskzero-synchronizer-elastic", _eventStoreUri),
+                        new UserCredentials("admin", "changeit"), new ReadModels.Elastic.Indexer<ReadModels.Elastic.Model.ZeroTask>(2000,
+                            new ElasticClient(_elasticSearchUri), "taskzero-tasks"));
                 var commandsHandler =
                     new Handler(new EventStoreDomainRepository("domain",
-                        BuildConnection("es-taskzero-domain", _uri, true)));
+                        BuildConnection("es-taskzero-domain", _eventStoreUri, true)));
                 new Worker("TaskZero.Console", inMemorySynchronizer, elasticSearchSynchronizer, commandsHandler).Run();
             }
             catch (Exception e)

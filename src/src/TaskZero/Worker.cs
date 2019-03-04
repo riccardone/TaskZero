@@ -24,7 +24,7 @@ namespace TaskZero
             _inMemorySynchroniser = inMemorySynchroniser;
             _elasticSynchroniser = elasticSynchroniser;
             _handler = handler;
-            InitReadModel();
+            InitReadModels();
         }
 
         public void Run()
@@ -38,11 +38,12 @@ namespace TaskZero
             RunToDoView(_handler);
         }
 
-        private void InitReadModel()
+        private void InitReadModels()
         {
             _inMemorySynchroniser.LiveSynchStarted += SyncroniserService_LiveSynchStarted;
             _inMemorySynchroniser.Start();
-            _elasticSynchroniser.Start();
+            if (_elasticSynchroniser != null)
+                _elasticSynchroniser.Start();
         }
 
         private static void SyncroniserService_LiveSynchStarted(object sender, EventArgs e)
