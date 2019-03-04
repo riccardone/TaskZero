@@ -11,20 +11,20 @@ namespace TaskZero
 {
     public class Worker
     {
-        private readonly SynchroniserService _inMemorySynchroniser;
-        private readonly ReadModels.Elastic.SynchroniserService _elasticSynchroniser;
+        private readonly SyncroniserService _inMemorySynchroniser;
+        private readonly ReadModels.Elastic.SyncroniserService _elasticSynchroniser;
         private readonly Handler _handler;
         private readonly string _sourceName;
         private string _userName;
         private string _correlationId;
 
-        public Worker(string sourceName, SynchroniserService inMemorySynchroniser, ReadModels.Elastic.SynchroniserService elasticSynchroniser, Handler handler)
+        public Worker(string sourceName, SyncroniserService inMemorySynchroniser, ReadModels.Elastic.SyncroniserService elasticSynchroniser, Handler handler)
         {
             _sourceName = sourceName;
             _inMemorySynchroniser = inMemorySynchroniser;
             _elasticSynchroniser = elasticSynchroniser;
             _handler = handler;
-            InitReadModel();
+            InitReadModels();
         }
 
         public void Run()
@@ -38,11 +38,12 @@ namespace TaskZero
             RunToDoView(_handler);
         }
 
-        private void InitReadModel()
+        private void InitReadModels()
         {
             _inMemorySynchroniser.LiveSynchStarted += SyncroniserService_LiveSynchStarted;
             _inMemorySynchroniser.Start();
-            _elasticSynchroniser.Start();
+            if (_elasticSynchroniser != null)
+                _elasticSynchroniser.Start();
         }
 
         private static void SyncroniserService_LiveSynchStarted(object sender, EventArgs e)

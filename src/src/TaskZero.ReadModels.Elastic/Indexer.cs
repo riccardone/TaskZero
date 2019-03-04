@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Timers;
@@ -85,20 +86,19 @@ namespace TaskZero.ReadModels.Elastic
 
                 bulkAll.Subscribe(new BulkAllObserver(
                     //onNext: (b) => { Console.Write("."); },
-                    onError: (e) => throw e,
+                    onError: (e) => throw new Exception("There is a problem with ElasticSearch", e),
                     onCompleted: () => waitHandle.Signal()
                 ));
 
                 waitHandle.Wait();
             }
 
-            if (_toBeDeleted.Any())
-            {
-                var toBeDeleted = _toBeDeleted.ToList();
-                _toBeDeleted.Clear();
-                foreach (var id in toBeDeleted)
-                    _elasticClient.Delete<T>(id, d => d.Index(_indexName));                
-            }
+            if (!_toBeDeleted.Any()) return;
+
+            var toBeDeleted = _toBeDeleted.ToList();
+            _toBeDeleted.Clear();
+            foreach (var id in toBeDeleted)
+                _elasticClient.Delete<T>(id, d => d.Index(_indexName));
         }
     }
 }
